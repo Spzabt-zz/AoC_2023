@@ -42,6 +42,42 @@ public class Day02 {
 
         System.out.println(trackGames);
 
+        int sumOfValidIds = getSumOfValidIds(trackGames);
+
+        System.out.println(sumOfValidIds);
+
+        int powerOfGameSets = getPowerOfGameSets(trackGames);
+
+        System.out.println(powerOfGameSets);
+    }
+
+    private static int getPowerOfGameSets(Map<Integer, List<Map<String, Integer>>> trackGames) {
+        Map<Integer, Map<String, Integer>> minSetOfCubes = new HashMap<>();
+
+        for (Map.Entry<Integer, List<Map<String, Integer>>> integerMapEntry : trackGames.entrySet()) {
+            Map<String, Integer> setsOfCubes = new HashMap<>();
+            for (Map<String, Integer> stringIntegerMap : integerMapEntry.getValue()) {
+                for (Map.Entry<String, Integer> stringIntegerEntry : stringIntegerMap.entrySet()) {
+                    if (!setsOfCubes.containsKey(stringIntegerEntry.getKey()))
+                        setsOfCubes.put(stringIntegerEntry.getKey(), stringIntegerEntry.getValue());
+                    else if (setsOfCubes.get(stringIntegerEntry.getKey()) < stringIntegerEntry.getValue())
+                        setsOfCubes.put(stringIntegerEntry.getKey(), stringIntegerEntry.getValue());
+                }
+            }
+            minSetOfCubes.put(integerMapEntry.getKey(), setsOfCubes);
+        }
+
+        minSetOfCubes.values().forEach(val -> System.out.println(val.values()));
+
+        return minSetOfCubes.values()
+                .stream()
+                .mapToInt(stringIntegerMap -> stringIntegerMap.values()
+                        .stream()
+                        .reduce(1, (multiAcc, gameSetValue) -> multiAcc * gameSetValue)
+                ).sum();
+    }
+
+    private static int getSumOfValidIds(Map<Integer, List<Map<String, Integer>>> trackGames) {
         int sumOfValidIds = 0;
         int counter = 0;
 
@@ -65,8 +101,7 @@ public class Day02 {
 
             counter = 0;
         }
-
-        System.out.println(sumOfValidIds);
+        return sumOfValidIds;
     }
 
     private enum Cube {
