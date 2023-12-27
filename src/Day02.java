@@ -1,5 +1,6 @@
-import java.io.File;
 import java.util.*;
+import java.util.function.BinaryOperator;
+import java.util.stream.Collectors;
 
 public class Day02 {
     public static void main(String[] args) {
@@ -52,25 +53,24 @@ public class Day02 {
     }
 
     private static int getPowerOfGameSets(Map<Integer, List<Map<String, Integer>>> trackGames) {
-        Map<Integer, Map<String, Integer>> minSetOfCubes = new HashMap<>();
 
-        for (Map.Entry<Integer, List<Map<String, Integer>>> integerMapEntry : trackGames.entrySet()) {
-            Map<String, Integer> setsOfCubes = new HashMap<>();
-            for (Map<String, Integer> stringIntegerMap : integerMapEntry.getValue()) {
-                for (Map.Entry<String, Integer> stringIntegerEntry : stringIntegerMap.entrySet()) {
-                    if (!setsOfCubes.containsKey(stringIntegerEntry.getKey()))
-                        setsOfCubes.put(stringIntegerEntry.getKey(), stringIntegerEntry.getValue());
-                    else if (setsOfCubes.get(stringIntegerEntry.getKey()) < stringIntegerEntry.getValue())
-                        setsOfCubes.put(stringIntegerEntry.getKey(), stringIntegerEntry.getValue());
-                }
-            }
-            minSetOfCubes.put(integerMapEntry.getKey(), setsOfCubes);
-        }
+        Map<Integer, Map<String, Integer>> minSetOfCubes = trackGames.entrySet().stream()
+                .collect(
+                        Collectors.groupingBy(
+                                Map.Entry::getKey,
+                                Collectors.flatMapping(
+                                        entry -> entry.getValue().stream(),
+                                        Collectors.flatMapping(
+                                                map -> map.entrySet().stream(),
+                                                Collectors.toMap(
+                                                        Map.Entry::getKey,
+                                                        Map.Entry::getValue,
+                                                        BinaryOperator.maxBy(Comparator.comparingInt(value -> value))
+                                                )
+                                        )
+                                )));
 
-        minSetOfCubes.values().forEach(val -> System.out.println(val.values()));
-
-        return minSetOfCubes.values()
-                .stream()
+        return minSetOfCubes.values().stream()
                 .mapToInt(stringIntegerMap -> stringIntegerMap.values()
                         .stream()
                         .reduce(1, (multiAcc, gameSetValue) -> multiAcc * gameSetValue)
@@ -78,30 +78,21 @@ public class Day02 {
     }
 
     private static int getSumOfValidIds(Map<Integer, List<Map<String, Integer>>> trackGames) {
-        int sumOfValidIds = 0;
-        int counter = 0;
+        final int[] sumOfValidIds = {0};
 
-        for (Map.Entry<Integer, List<Map<String, Integer>>> integerMapEntry : trackGames.entrySet()) {
-            for (Map<String, Integer> stringIntegerMap : integerMapEntry.getValue()) {
-                for (Map.Entry<String, Integer> stringIntegerEntry : stringIntegerMap.entrySet()) {
-                    if (Objects.equals(Cube.RED.lowerCase, stringIntegerEntry.getKey()))
-                        if (stringIntegerEntry.getValue() > Cube.RED.value)
-                            counter++;
-                    if (Objects.equals(Cube.GREEN.lowerCase, stringIntegerEntry.getKey()))
-                        if (stringIntegerEntry.getValue() > Cube.GREEN.value)
-                            counter++;
-                    if (Objects.equals(Cube.BLUE.lowerCase, stringIntegerEntry.getKey()))
-                        if (stringIntegerEntry.getValue() > Cube.BLUE.value)
-                            counter++;
-                }
-            }
+        trackGames.forEach((key, value) -> {
+            boolean isImpossibleGameExists = value.stream()
+                    .flatMap(entry -> entry.entrySet().stream())
+                    .anyMatch(entry ->
+                            (Objects.equals(Cube.RED.lowerCase, entry.getKey()) && entry.getValue() > Cube.RED.value) ||
+                                    (Objects.equals(Cube.GREEN.lowerCase, entry.getKey()) && entry.getValue() > Cube.GREEN.value) ||
+                                    (Objects.equals(Cube.BLUE.lowerCase, entry.getKey()) && entry.getValue() > Cube.BLUE.value));
 
-            if (counter == 0)
-                sumOfValidIds += integerMapEntry.getKey();
+            if (!isImpossibleGameExists)
+                sumOfValidIds[0] += key;
+        });
 
-            counter = 0;
-        }
-        return sumOfValidIds;
+        return sumOfValidIds[0];
     }
 
     private enum Cube {
