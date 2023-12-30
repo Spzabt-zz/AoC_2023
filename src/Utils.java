@@ -18,4 +18,19 @@ public class Utils {
 
         return input;
     }
+
+    public static void writeToFile(String fileName, List<List<Character>> stringToWrite) {
+        File file = new File("puzzle-input/" + fileName + ".txt");
+
+        try (PrintWriter pw = new PrintWriter(file)) {
+            for (List<Character> characters : stringToWrite) {
+                for (Character character : characters) {
+                    pw.print(character);
+                }
+                pw.println('\n');
+            }
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
