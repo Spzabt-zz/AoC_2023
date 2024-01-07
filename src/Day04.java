@@ -1,13 +1,66 @@
 import java.util.*;
+import java.util.function.IntFunction;
 
 public class Day04 {
     public static void main(String[] args) {
         // List<String> puzzle = Utils.readFile("Day04_test");
-        List<String> puzzle = Utils.readFile("Day04");
+        List<String> puzzle = Utils.readFile("Day04_2");
 
         List<Card> cards = parseCards(puzzle);
 
+        getTotalPoints(cards);
+
+        getTotalScratchcards(cards);
+    }
+
+    private static void getTotalScratchcards(List<Card> cards) {
+        Map<Integer, Integer> scratchcards = new HashMap<>();
+
+        for (int i = 0; i < cards.size(); i++) {
+            List<Integer> cardPoints = new ArrayList<>();
+            final int finalI = i;
+
+            cards.get(i).getNumsYouHave().forEach(yourCard -> {
+                Integer point = cards.get(finalI).getWinningNums().stream()
+                        .filter(winCard -> winCard.equals(yourCard))
+                        .findFirst().orElseGet(() -> 0);
+
+                cardPoints.add(point);
+            });
+
+            Integer[] matchingNumbers = cardPoints.stream()
+                    .filter(point -> point != 0)
+                    .toArray(Integer[]::new);
+
+            int counter = 1;
+            int id = cards.get(i).getId();
+            for (int j = id; j <= id + matchingNumbers.length; j++) {
+                if (!scratchcards.containsKey(id))
+                    scratchcards.put(id, counter);
+                else if (!scratchcards.containsKey(j))
+                    scratchcards.put(j, counter);
+                else scratchcards.put(j, scratchcards.get(j) + counter);
+            }
+
+            if (scratchcards.get(id) > 1) {
+                int copyCount = scratchcards.get(id) - 1;
+
+                for (int j = id + 1; j <= id + matchingNumbers.length; j++) {
+                    scratchcards.put(j, scratchcards.get(j) + copyCount);
+                }
+            }
+        }
+
+        int totalScratchcards = scratchcards.values().stream()
+                .mapToInt(i -> i)
+                .sum();
+
+        System.out.println(totalScratchcards);
+    }
+
+    private static void getTotalPoints(List<Card> cards) {
         int[] pointsTotal = new int[cards.size()];
+
         for (int i = 0; i < cards.size(); i++) {
 
             List<Integer> cardPoints = new ArrayList<>();
